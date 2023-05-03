@@ -1,0 +1,3 @@
+D:/Project/C_source/PictureDetector/cmake-build-debug/CMakeFiles/PictureDetector.dir
+D:/Project/C_source/PictureDetector/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Project/C_source/PictureDetector/cmake-build-debug/CMakeFiles/rebuild_cache.dir
