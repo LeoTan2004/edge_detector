@@ -4,10 +4,16 @@
 
 #ifndef PICTUREDETECTOR_BMPFILE_H
 #define PICTUREDETECTOR_BMPFILE_H
-#define REDEFINE_VALUE
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#define REDEFINE_V_P
 typedef unsigned char U8;
 typedef unsigned short U16;
 typedef unsigned int U32;
+
+
 typedef U8 V_P ;
 const static U8 _NONE_DATA = 0;
 const static V_P NULL_DATA_V = (V_P)_NONE_DATA;
@@ -24,7 +30,6 @@ typedef struct {
     U16 bfReserved1;
     U16 bfReserved2;
     U32 bfOffBits;      //文件头偏移量
-
     //DIB header
     U32 biSize;         //DIB头大小
     U32 biWidth;        //文件宽度
@@ -37,7 +42,7 @@ typedef struct {
     U32 biYPelsPerMeter;
     U32 biClrUsed;
     U32 biClrImportant;
-    col_data colData;
+    col_data colData;//1024位调色板
 } BMP_HEADER;
 #pragma  pack()
 
@@ -49,5 +54,7 @@ void * writeGridData(FILE *file, bool isGray, GRID *grid);
 void * writeHeader(FILE *file, BMP_HEADER *header);
 
 GRID *getGridData(FILE *file, BMP_HEADER *header);
-
+#ifdef __cplusplus
+}
+#endif
 #endif //PICTUREDETECTOR_BMPFILE_H

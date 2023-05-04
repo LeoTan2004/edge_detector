@@ -27,7 +27,22 @@ void getName(int argc, char *const *argv, char *rawFileName, char *proFileName) 
     }
 }
 
+R_P factors (V_P* value){
+    U8 temp = *value;
+    return temp;
+}
 
+FACTOR factor = {
+        factors
+};
+
+V_P *get_func(struct GRID *this, U32 x, U32 y, V_P *defaultValue) {
+    if (NULL == this || NULL == this->values)return &NULL_DATA_V;
+    U32 width = this->width;
+    U32 height = this->height;
+    if (x >= width || y >= height)return defaultValue;
+    return factor;
+}
 
 int main(int argc, char **argv) {
     char rawFileName[FILENAME_MAX]="02.bmp";
@@ -46,7 +61,12 @@ int main(int argc, char **argv) {
     CONV_CORE *core = init_CONV_CORE();
     core->height = 3;
     core->width = 3;
-    core->convolution;
+    for (int i = 0; i < grid->width; ++i) {
+        for (int j = 0; j < grid->height; ++j) {
+//            core->convolution()
+            core->convolution(core,i,j,grid);
+        }
+    }
     //写入文件
     file = fopen(proFileName, "wb");
     if (OPEN_FAIL == file)
