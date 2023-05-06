@@ -43,7 +43,6 @@ V_P *get_func(struct GRID *this, U32 x, U32 y, V_P *defaultValue) {
     if (x >= width || y >= height)return defaultValue;
     return factor;
 }
-
 int main(int argc, char **argv) {
     char rawFileName[FILENAME_MAX]="02.bmp";
     char proFileName[FILENAME_MAX] ="02_EQ.bmp" ;
