@@ -45,8 +45,20 @@ typedef struct {
     col_data colData;//1024位调色板
 } BMP_HEADER;
 #pragma  pack()
+#define BMP_BLACK 255
+#define BMP_WHITE 0
+#define MAX(a,b) (a>b?a:b)
+#define MIN(a,b) (a<b?a:b)
+#define BMP_NULL_DATA BMP_BLACK
+typedef enum{
+    BMP_GRAY_EDGE,
+    BMP_BIN_EDGE
+}ACTION;
 GRID_TYPE_SET(V_P);
+CONVOLUTION_CORE_SET(V_P, V_P);
 typedef grid(V_P) GRID_U8;
+
+grid(V_P) *dealWithBmp(FILE* file,BMP_HEADER *bmpHeader, grid(V_P) *product,ACTION action);
 
 BMP_HEADER *readHeader(FILE *file);
 
