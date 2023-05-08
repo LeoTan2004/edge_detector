@@ -3,4 +3,4 @@ project(PictureDetector C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(PictureDetector grid.h test/demo01.c)
+add_executable(PictureDetector grid.h bmpFile.c bmpFile.h main.c)

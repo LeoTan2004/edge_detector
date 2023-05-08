@@ -13,7 +13,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define reflect(x,y) (x + y * this.height)
+#define reflect(x,y) (x*this->width + y)
 #define grid(T) T##_grid
 typedef struct position position;
 struct position {
@@ -26,36 +26,41 @@ struct position {
 typedef struct grid(T) grid(T);\
 struct grid(T) {\
     T (*get)(size_t y, size_t x,const T default_value);\
-    void (*set)(size_t y, size_t x,const T value);\
-    size_t width;\
-    size_t height;\
+    void (*set)(size_t y, size_t x,const T value);     \
+    T *(*get_value)();   \
+    size_t width;        \
+    size_t height;       \
     position (*indexOf)(const T *ele);                 \
-    T *(*valueOf)(T* target,size_t w, size_t h);\
+    T *(*valueOf)(T* target,size_t w, size_t h);       \
 }
 /*******************************/
 
 /*******************************/
-#define GRID_BODY_FUNCTION(T)\
+#define GRID_BODY_FUNCTION(T) \
+                              \
+T* get_value_##T(){    \
+    return cells;             \
+}                             \
 inline _Bool isValid(size_t y, size_t x) { \
-    return cells != NULL && x < this.width && y < this.height; \
+    return cells != NULL && x < this->width && y < this->height; \
 }                            \
-T get_s(size_t y, size_t x, const T default_value) {          \
+T get_s(size_t y, size_t x, const T default_value) {             \
     if (!isValid(x, y)) \
     return default_value;    \
     if(IsBadReadPtr(&cells[reflect(x,y)],sizeof(T)))  {  \
         raise(SIGSEGV);      \
         return default_value;\
-    }                        \
+    }                         \
     return cells[reflect(x,y)];     \
 }                            \
-T *value_of(T* target,size_t w, size_t h){ \
-    T *pre = cells;          \
-    if(IsBadReadPtr(target, w * h * sizeof(T))){                   \
-          return target;     \
+T *value_of_##T(T* target,size_t w, size_t h){                   \
+    T *pre = cells;           \
+    if(IsBadReadPtr(target, w * h * sizeof(T))){                 \
+        return target;     \
     }                        \
     cells = target;          \
-    this.height = w;         \
-    this.width = h;          \
+    this->height = w;         \
+    this->width = h;          \
     return pre;              \
 }                            \
 void set_s(size_t y, size_t x, const T value) {\
@@ -74,8 +79,8 @@ position get_position(const T *ele) {      \
     if (ele < begin)return out;            \
     size_t index = (ele - begin);          \
     index /= sizeof(T);      \
-    if (index > (this.width * this.height))return out;         \
-    position pos = {index % this.width, index / this.width};   \
+    if (index > (this->width * this->height))return out;         \
+    position pos = {index % this->width, index / this->width};   \
     return pos;              \
 }
 
@@ -86,21 +91,22 @@ position get_position(const T *ele) {      \
 #define GRID_BODY_INIT(T, w, h) \
 ({                              \
     T *cells = NULL;            \
-    grid(T) this;               \
-    this.height = w;            \
-    this.width = h;             \
+    grid(T) *this = malloc(sizeof(grid(T)));               \
+    this->height = w;            \
+    this->width = h;             \
     GRID_BODY_FUNCTION(T)       \
-    this.set = set_s;           \
-    this.get = get_s;           \
-    this.indexOf = get_position;\
-    this.valueOf = value_of;\
-    this;                       \
+    this->set = set_s;           \
+    this->get = get_s;           \
+    this->indexOf = get_position;\
+    this->valueOf = value_of_##T;   \
+    this->get_value = get_value_##T;                            \
+    this;                      \
 })
 #define new_grid(T, w, h) (GRID_BODY_INIT(T,w,h))
 /*******************************/
 #define conv_core(T, R) conv_core_##T##_##R
 /*******************************/
-#define CONVOLUTION_CORE_SET(T, R, w, h) \
+#define CONVOLUTION_CORE_SET(T, R) \
 typedef R (*factor_##T##_##R)(const T fact); \
 typedef R (*simulate_##T##_##R)(const R fact1,const R fact2); \
 typedef R (*do_conv_##T##_##R)(const grid(T) *rawData,size_t x,size_t y,const T outOfEdge); \
@@ -115,36 +121,39 @@ typedef struct {                         \
 /*******************************/
 /*******************************/
 #define CONVOLUTION_CORE_BODY_FUNCTION(T, R, w, h) \
-R do_conv_##T##_##R(const grid(T) *rawData,size_t x,size_t y,const T outOfEdge){ \
+R do_convo_##T##_##R(const grid(T) *rawData,size_t x,size_t y,const T outOfEdge){ \
     R result = outOfEdge;                          \
-    _Bool flags = FALSE;                          \
-    for (int i = 0; i < this.factorGrid->width; ++i) {                           \
-        for (int j = 0; j < this.factorGrid->height; ++j) {                      \
-            R temp = this.factorGrid->get(i, j, NULL)(     \
-            rawData->get(x - this.core_x + i, y - this.core_y + j, outOfEdge));  \
-            if (flags) {                               \
-                result = this.simulation(result, temp);\
-            } else {                                   \
-                result = temp;                         \
-                flags = TRUE;                          \
+    _Bool flags = FALSE;                           \
+    for (int i = 0; i < this->factorGrid->width; ++i) {                           \
+        for (int j = 0; j < this->factorGrid->height; ++j) {                      \
+            R temp = this->factorGrid->get(i, j, NULL)(                           \
+            rawData->get(x - this->core_x + i, y - this->core_y + j, outOfEdge));  \
+            if (flags) {                           \
+                result = this->simulation(result, temp);                          \
+            } else {                               \
+                result = temp;                     \
+                flags = TRUE;                      \
             }                                      \
         }                                          \
     }                                              \
     return result;                                 \
 }                                                  \
+R simulates_##T##_##R(const R fact1,const R fact2){\
+    return fact2;\
+}\
 /*******************************/
 /*******************************/
 #define CONVOLUTION_CORE_BODY_INIT(T, R, w, h) \
 ({                                             \
-conv_core(int,int) this;                       \
-grid(factor_##T##_##R) grid_i = new_grid(factor_##T##_##R ,w,h); \
-this.core_y = 0;                               \
-this.core_x = 0;                               \
+conv_core(T,R) *this = malloc(sizeof(conv_core(T,R)));                       \
+grid(factor_##T##_##R) *grid_i = new_grid(factor_##T##_##R ,w,h); \
+this->core_y = 0;                               \
+this->core_x = 0;                               \
 CONVOLUTION_CORE_BODY_FUNCTION(T,R,w,h);       \
-this.factorGrid = &grid_i;                     \
-this.simulation = NULL;                        \
-this.convolution = do_conv_##T##_##R;          \
-this;                                          \
+this->factorGrid = grid_i;                     \
+this->simulation = simulates_##T##_##R;         \
+this->convolution = do_convo_##T##_##R;         \
+this;                                         \
 })                                             \
 /*******************************/
 

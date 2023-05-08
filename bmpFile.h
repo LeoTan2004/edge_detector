@@ -18,7 +18,7 @@ typedef U8 V_P ;
 const static U8 _NONE_DATA = 0;
 const static V_P NULL_DATA_V = (V_P)_NONE_DATA;
 #include <stdio.h>
-#include "class.h"
+#include "grid.h"
 #define COL_DATA 1024
 
 typedef U8 col_data[COL_DATA];//调色板
@@ -45,15 +45,17 @@ typedef struct {
     col_data colData;//1024位调色板
 } BMP_HEADER;
 #pragma  pack()
-
+GRID_TYPE_SET(V_P);
+typedef grid(V_P) GRID_U8;
 
 BMP_HEADER *readHeader(FILE *file);
 
-void * writeGridData(FILE *file, bool isGray, GRID *grid);
+void * writeGridData(FILE *file, bool isGray, GRID_U8 *grid);
 
 void * writeHeader(FILE *file, BMP_HEADER *header);
 
-GRID *getGridData(FILE *file, BMP_HEADER *header);
+
+grid(V_P) *getGridData(FILE *file, BMP_HEADER *header,GRID_U8 *grid);
 #ifdef __cplusplus
 }
 #endif
