@@ -13,7 +13,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define reflect(x,y) (x*this->width + y)
+#define reflect(x,y) (x + y*this->height)
 #define grid(T) T##_grid
 typedef struct position position;
 struct position {
@@ -92,8 +92,8 @@ position get_position(const T *ele) {      \
 ({                              \
     T *cells = NULL;            \
     grid(T) *this = malloc(sizeof(grid(T)));               \
-    this->height = w;            \
-    this->width = h;             \
+    this->height = h;            \
+    this->width = w;             \
     GRID_BODY_FUNCTION(T)       \
     this->set = set_s;           \
     this->get = get_s;           \
@@ -120,7 +120,7 @@ typedef struct {                         \
 } conv_core_##T##_##R                    \
 /*******************************/
 /*******************************/
-#define CONVOLUTION_CORE_BODY_FUNCTION(T, R, w, h) \
+#define CONVOLUTION_CORE_BODY_FUNCTION(T, R) \
 R do_convo_##T##_##R(const grid(T) *rawData,size_t x,size_t y,const T outOfEdge){ \
     R result = outOfEdge;                          \
     _Bool flags = FALSE;                           \
@@ -149,7 +149,7 @@ conv_core(T,R) *this = malloc(sizeof(conv_core(T,R)));                       \
 grid(factor_##T##_##R) *grid_i = new_grid(factor_##T##_##R ,w,h); \
 this->core_y = 0;                               \
 this->core_x = 0;                               \
-CONVOLUTION_CORE_BODY_FUNCTION(T,R,w,h);       \
+CONVOLUTION_CORE_BODY_FUNCTION(T,R);       \
 this->factorGrid = grid_i;                     \
 this->simulation = simulates_##T##_##R;         \
 this->convolution = do_convo_##T##_##R;         \
