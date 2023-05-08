@@ -47,7 +47,7 @@ V_P abs_dif(V_P raw,V_P pro){
 }
 
 V_P binary(V_P raw,V_P pro){
-    return (raw>BMP_BLACK>>1?BMP_BLACK:BMP_WHITE)==pro?BMP_WHITE:BMP_BLACK;
+    return (fac_BIN(raw))== fac_BIN(pro)?BMP_WHITE:BMP_BLACK;
 }
 
 BMP_HEADER *readHeader(FILE *file) {
@@ -101,16 +101,16 @@ GRID_U8 *getGridData(FILE *file, BMP_HEADER *header, GRID_U8 *grid) {
 
 grid(V_P) *dealWithBmp(FILE *file, BMP_HEADER *bmpHeader, grid(V_P) *product, ACTION action) {
     conv_core(V_P, V_P) *conv_bin = new_conv_core(V_P, V_P, 3, 3);
-    grid(V_P) *grid = new_grid(V_P, 1, 1);
-    getGridData(file, bmpHeader, grid);
-//    convolution grid(SE)
+    grid(V_P) *grid_con = new_grid(V_P, 1, 1);
+    getGridData(file, bmpHeader, grid_con);
+//    convolution grid_con(SE)
     conv_core(V_P, V_P) *conv = conv_bin;
     conv->core_x = 1;
     conv->core_y = 1;
     simulate_V_P_V_P result_simu = simulates_min;
     def:
     switch (action) {
-        case (BMP_BIN_EDGE):
+        case BMP_BIN_EDGE:
             conv->factorGrid->valueOf(pFunction_BIN, con_size, con_size);
             result_simu = binary;
             conv->simulation = simulates_max;
@@ -125,13 +125,13 @@ grid(V_P) *dealWithBmp(FILE *file, BMP_HEADER *bmpHeader, grid(V_P) *product, AC
             goto def;
             break;
     }
-    V_P *p_v = grid->get_value();
-    V_P *pro = malloc(sizeof(U8) * grid->width * grid->height);
-    product->valueOf(pro, grid->height, grid->width);
-    for (int i = 0; i < grid->width; ++i) {
-        for (int j = 0; j < grid->height; ++j) {
-            V_P result = conv->convolution(grid, i, j, BMP_NULL_DATA);
-            V_P r = (grid->get(i, j, BMP_BLACK));
+    V_P *p_v = grid_con->get_value();
+    V_P *pro = malloc(sizeof(U8) * grid_con->width * grid_con->height);
+    product->valueOf(pro, grid_con->height, grid_con->width);
+    for (int i = 0; i < grid_con->width; ++i) {
+        for (int j = 0; j < grid_con->height; ++j) {
+            V_P result = conv->convolution(grid_con, i, j, BMP_NULL_DATA);
+            V_P r = (grid_con->get(i, j, BMP_BLACK));
             result = result_simu(r,result);// - result ;
             product->set(i, j, result);
         }

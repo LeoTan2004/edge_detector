@@ -11,21 +11,53 @@
 #define OPEN_FILE_READ_BIN ("rb")
 
 
+static struct {
+    unsigned short target: 2;
+    unsigned short output: 2;
+    unsigned short isGray: 2;//gray==>1  bin==>0
+} arguments = {0};
+
 void getName(int argc, char *const *argv, char *rawFileName, char *proFileName) {
-    if (argc == 1) {
+    for (int i = 1; i < argc; ++i) {
+        if (strstr(argv[i], "-f")) {
+            if (++i < argc) {
+                strcpy(rawFileName, argv[i]);
+                arguments.target = 1;
+                continue;
+            }
+            printf("argument illegal");
+            exit(__LINE__);
+        }
+        if (strstr(argv[i], "-o")) {
+            if (++i < argc) {
+                strcpy(proFileName, argv[i]);
+                arguments.output = 1;
+                continue;
+            }
+            printf("argument illegal");
+            exit(__LINE__);
+        }
+        if (strstr(argv[i], "-g")) {
+            arguments.isGray = 1;
+            continue;
+        }
+        if (arguments.target == 0) {
+            strcpy(rawFileName, argv[i]);
+        } else if (arguments.output == 0) {
+            strcpy(proFileName, argv[i]);
+        } else {
+            printf("argument illegal : %s\n", argv[i]);
+            exit(__LINE__);
+        }
+    }
+    if (arguments.target == 0) {
         printf("File name of the image to be processed: ");
         scanf("%s", rawFileName);
+    }
+    if (arguments.output == 0) {
         strcpy(proFileName, "");
         strncat(proFileName, rawFileName, strlen(rawFileName) - 4);
         strcat(proFileName, "_result.bmp");
-    } else if (argc == 2) {
-        strcpy(rawFileName, argv[1]);
-        strcpy(proFileName, "");
-        strncat(proFileName, rawFileName, strlen(rawFileName) - 4);
-        strcat(proFileName, "_result.bmp");
-    } else {
-        strcpy(rawFileName, argv[1]);
-        strcpy(proFileName, argv[2]);
     }
 }
 
@@ -34,6 +66,7 @@ int main(int argc, char **argv) {
     char proFileName[FILENAME_MAX] = "02_EQ.bmp";
     getName(argc, argv, rawFileName, proFileName);
 
+
     FILE *file = fopen(rawFileName, OPEN_FILE_READ_BIN);
     if (OPEN_FAIL == file) {
         perror("open bmp file fail");
@@ -41,7 +74,7 @@ int main(int argc, char **argv) {
     grid(V_P) *product = new_grid(V_P, 1, 1);
     BMP_HEADER *bmpHeader = malloc(sizeof(BMP_HEADER));;
     //读取头部
-    product = dealWithBmp(file, bmpHeader, product, BMP_GRAY_EDGE);
+    product = dealWithBmp(file, bmpHeader, product, arguments.isGray?BMP_GRAY_EDGE:BMP_BIN_EDGE);
     //写入文件
     fclose(file);
     file = fopen(proFileName, "wb");
