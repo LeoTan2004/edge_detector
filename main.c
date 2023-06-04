@@ -2,10 +2,12 @@
 // Created by Leo on 2023/4/21.
 //
 
-#include "bmpFile.h"
 #include "string.h"
+#include "stdlib.h"
 #include "stdio.h"
+#include "bmp.h"
 #include "grid.h"
+#include "conv_std.h"
 
 #define OPEN_FAIL NULL
 #define OPEN_FILE_READ_BIN ("rb")
@@ -61,7 +63,31 @@ void getName(int argc, char *const *argv, char *rawFileName, char *proFileName) 
     }
 }
 
+unsigned height_bmp = 0;
+unsigned width_bmp = 0;
+
+void *get_bmp8(void *data, unsigned x, unsigned y) {
+    if (x >= width_bmp || y >= height_bmp)return NULL;
+    byte *d = (byte *) data;
+    return &d[x + y * height_bmp];
+}
+
+void set_bmp8(void *data, void *value, unsigned x, unsigned y) {
+    if (x >= width_bmp || y >= height_bmp)return;
+    byte v = *(byte *) value;
+    byte *d = (byte *) data;
+    d[x + y * height_bmp] = v;
+}
+
+void* pooling_plus8(void *pre, void *aft, unsigned x, unsigned y){
+    byte *pre_data = (byte*)pre;
+    byte *aft_data = (byte*)aft;
+    *pre_data += (*aft_data);
+    return pre;
+}
+
 int main(int argc, char **argv) {
+
     char rawFileName[FILENAME_MAX] = "02.bmp";
     char proFileName[FILENAME_MAX] = "02_EQ.bmp";
     getName(argc, argv, rawFileName, proFileName);
@@ -71,18 +97,24 @@ int main(int argc, char **argv) {
     if (OPEN_FAIL == file) {
         perror("open bmp file fail");
     }
-    grid(V_P) *product = new_grid(V_P, 1, 1);
-    BMP_HEADER *bmpHeader = malloc(sizeof(BMP_HEADER));;
-    //读取头部
-    product = dealWithBmp(file, bmpHeader, product, arguments.isGray?BMP_GRAY_EDGE:BMP_BIN_EDGE);
+    BMP_FILE_DATA *file_data = read_bmp_file(file);
+    height_bmp = file_data->infoHeader->biHeight;
+    width_bmp = file_data->infoHeader->biWidth;
+    DATA_BLOCK *raw = create_data_block_a(file_data->pix_data, get_bmp8, set_bmp8, width_bmp, height_bmp);
+    byte *pro = (byte *) malloc(
+            (file_data->infoHeader->biWidth * file_data->infoHeader->biHeight * file_data->infoHeader->biBitCount)
+                    >> 3);
+    //处理函数
+    CONV_CON_BLOCK *conv = default_init();
+    pooling_handle* pooling = (pooling_handle*) get_handles(POOL_HANDLE);
+    pooling[0] = pooling_plus8;
     //写入文件
     fclose(file);
     file = fopen(proFileName, "wb");
     if (OPEN_FAIL == file) {
         perror("write file failed");
     }
-    writeHeader(file, bmpHeader);
-    writeGridData(file, TRUE, product);
+
     fclose(file);
     return 0;
 }
